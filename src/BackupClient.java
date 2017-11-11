@@ -1,38 +1,61 @@
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.Socket;
+import java.net.MalformedURLException;
 import java.net.UnknownHostException;
-import java.nio.file.Path;
+import java.rmi.AlreadyBoundException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 
-public class BackupClient {
-	private Socket socket;
-	private OutputStream os;
-	private InputStream is;
-	private BufferedReader responseReader;
-	private final int fragmentSize=1048576;
-	public BackupClient(String host, int port) throws UnknownHostException, IOException{
-		socket=new Socket(host, port);		
-		os=socket.getOutputStream();
-		is=socket.getInputStream();
-		responseReader=new BufferedReader(new InputStreamReader(is));
+import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
+
+public class BackupClient implements ClientRMIInterface{
+	private Remote remote;
+	ServerInterface server;
+	JLabel infoLabel;
+	Registry rmiRegistry;
+	public BackupClient(JLabel info) throws MalformedURLException, RemoteException, NotBoundException, AlreadyBoundException{
+		remote=Naming.lookup("backupServer");
+		if(!(remote instanceof ServerInterface))
+			throw new RemoteException();
+		else
+			server=(ServerInterface)remote;
+		infoLabel=info;
+		start();
 	}
-	
-	public String sendFile(Path filePath) throws IOException{
-		DataInputStream dis=new DataInputStream(new FileInputStream(filePath.toString()));
-		byte[] fileFragment=new byte[fragmentSize];
-		int length=0;
-		while((length=dis.read(fileFragment)) != -1){
-			os.write(fileFragment, 0, length);
-		}
-		String response=responseReader.readLine();
-		socket.close();
-		return response;
+	public String getModificationDate(String fileLocalPath) throws RemoteException{
+		return server.lastModificationDate(fileLocalPath);
+	}
+	public void sendFile(String path) throws UnknownHostException{
+		SendFileHelper sfHelper;
+			try {
+				sfHelper = new SendFileHelper(path,"localhost", 1010, infoLabel);
+				new Thread(sfHelper).start();
+			} catch (IOException e) {
+				SwingUtilities.invokeLater(new Runnable(){
+
+					@Override
+					public void run() {
+						infoLabel.setText("Unable to send file");
+						
+					}
+					
+				});
+				e.printStackTrace();
+			}
+
 		
+
 	}
 	
+	public String getFileModificationDate(String path){
+		return "1996-02-29";
+	}
+	public void start() throws RemoteException, AlreadyBoundException{
+		rmiRegistry=LocateRegistry.createRegistry(Integer.parseInt(Config.getProperty("RMIport")));
+		rmiRegistry.bind("client", this);
+	}
 }
