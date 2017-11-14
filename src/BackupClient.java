@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
+import java.rmi.AccessException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -12,7 +13,7 @@ import java.rmi.registry.Registry;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-public class BackupClient implements ClientRMIInterface{
+public class BackupClient{
 	private Remote remote;
 	ServerInterface server;
 	JLabel infoLabel;
@@ -24,15 +25,12 @@ public class BackupClient implements ClientRMIInterface{
 		else
 			server=(ServerInterface)remote;
 		infoLabel=info;
-		start();
-	}
-	public String getModificationDate(String fileLocalPath) throws RemoteException{
-		return server.lastModificationDate(fileLocalPath);
+		//start();
 	}
 	public void sendFile(String path) throws UnknownHostException{
-		SendFileHelper sfHelper;
+		TransferFileConnHelper sfHelper;
 			try {
-				sfHelper = new SendFileHelper(path,"localhost", 1010, infoLabel);
+				sfHelper = new TransferFileConnHelper(path,"localhost", Integer.parseInt(Config.getProperty("port")), infoLabel, TransferFileConnHelper.UPLOAD_FUNCTION);
 				new Thread(sfHelper).start();
 			} catch (IOException e) {
 				SwingUtilities.invokeLater(new Runnable(){
@@ -54,8 +52,18 @@ public class BackupClient implements ClientRMIInterface{
 	public String getFileModificationDate(String path){
 		return "1996-02-29";
 	}
-	public void start() throws RemoteException, AlreadyBoundException{
-		rmiRegistry=LocateRegistry.createRegistry(Integer.parseInt(Config.getProperty("RMIport")));
+	/*public void start() throws RemoteException, AlreadyBoundException{
+		rmiRegistry=LocateRegistry.createRegistry(Integer.parseInt(Config.getProperty("clientRMIport")));
 		rmiRegistry.bind("client", this);
 	}
+	public void stop(){
+		try {
+			rmiRegistry.unbind("client");
+		} catch (RemoteException | NotBoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	*/
 }

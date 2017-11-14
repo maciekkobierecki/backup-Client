@@ -4,3 +4,8 @@
 /ClientRMIInterface.class
 /BackupClient$1.class
 /SendFileHelper$1.class
+/TransferFileConnHelper$1.class
+/TransferFileConnHelper.class
+/MainWindow$2.class
+/FileMetadata.class
+/RMIClient.class

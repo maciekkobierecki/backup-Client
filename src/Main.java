@@ -11,11 +11,11 @@ public class Main {
 		new MainWindow();
 		String url="rmi://localhost/server";
 		try {
-			Remote remote=Naming.lookup("server");
+			Remote remote=Naming.lookup("backupServer");
 			ServerInterface server=null;
 			if(remote instanceof ServerInterface)
 				server=(ServerInterface)remote;
-			System.out.println("Server says: "+ server.lastModificationDate("xd"));
+		
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
