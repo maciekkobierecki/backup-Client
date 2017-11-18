@@ -1,11 +1,4 @@
-/ServerInterface.class
-/SendFileHelper.class
-/BackupClient.class
-/ClientRMIInterface.class
-/BackupClient$1.class
-/SendFileHelper$1.class
-/TransferFileConnHelper$1.class
-/TransferFileConnHelper.class
-/MainWindow$2.class
-/FileMetadata.class
-/RMIClient.class
+/java.policy.applet
+/FileTable.class
+/FileTableModel.class
+/MainWindow$3.class

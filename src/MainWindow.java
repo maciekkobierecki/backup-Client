@@ -8,6 +8,7 @@ import java.net.UnknownHostException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -17,19 +18,19 @@ import javax.swing.JPanel;
 import javax.swing.JTable;
 
 public class MainWindow extends JFrame {
-	private JTable onServerTable;
+	private FileTable onServerTable;
 	private JButton uploadButton;
 	private JButton refreshButton;
 	private BackupClient backupClient;
 	private JLabel infoLabel;
 	private JFileChooser fileChooser;
+	private RMIClient rmiClient;
 	public MainWindow(){
 		super();
-		onServerTable=new JTable();
+		rmiClient=new RMIClient();
 		uploadButton=new JButton(Config.getProperty("UploadButtonLabel"));
 		refreshButton=new JButton(Config.getProperty("refreshButtonLabel"));
 		this.setLayout(new BorderLayout());
-		onServerTable.setPreferredSize(new Dimension(300,200));
 		JPanel menuPanel=new JPanel();
 		menuPanel.setLayout(new GridLayout(1,2));
 		menuPanel.add(refreshButton);
@@ -39,11 +40,19 @@ public class MainWindow extends JFrame {
 		infoLabel=new JLabel("nothing");
 		this.addWindowListener(new java.awt.event.WindowAdapter(){
 			public void windowClosing(java.awt.event.WindowEvent wEvent){
-			//backupClient.stop();
 			System.exit(0);
 			}
 		});
-		add(onServerTable);
+
+
+		refreshButton.addActionListener(new ActionListener(){
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				refreshFileTable();		
+			}
+			
+		});
 		try {
 			backupClient=new BackupClient(infoLabel);
 		} catch (MalformedURLException | RemoteException | NotBoundException | AlreadyBoundException e) {
@@ -68,8 +77,25 @@ public class MainWindow extends JFrame {
 			}
 			
 		});
+		try {
+			onServerTable=new FileTable(rmiClient.getFilesMetadata());
+			add(onServerTable);
+		} catch (RemoteException e1) {
+			infoLabel.setText("Unable to connect with server.");
+		}
+
 		pack();
 		setVisible(true);
+	}
+	public void refreshFileTable(){
+		try {
+			ArrayList<FileMetadata> fetchedMetadata=rmiClient.getFilesMetadata();
+			onServerTable.replace(fetchedMetadata);
+			onServerTable.dataChanged();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 }

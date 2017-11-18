@@ -7,25 +7,11 @@ import java.rmi.RemoteException;
 public class Main {
 
 	public static void main(String[] args) {
+		//if(System.getSecurityManager()==null)
+			//System.setSecurityManager(new SecurityManager());
 		Config.init();
 		new MainWindow();
-		String url="rmi://localhost/server";
-		try {
-			Remote remote=Naming.lookup("backupServer");
-			ServerInterface server=null;
-			if(remote instanceof ServerInterface)
-				server=(ServerInterface)remote;
-		
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NotBoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	
 	}
 
 }
