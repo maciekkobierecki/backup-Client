@@ -8,42 +8,56 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
 
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
 public class TransferFileConnHelper implements Runnable {
 	public final static String PERMISSION="PERMISSION";
-	public final static String UPLOAD_FUNCTION="UPLOAD_FUNCTION";
-	public final static String DOWNLOAD_FUNCTION="DOWNLAOD_FUNCTION";
+	public final static String UPLOAD_FUNCTION="upload";
+	public final static String DOWNLOAD_FUNCTION="download";
+	public final static String ACK="ACK";
 	private Socket socket;
 	private OutputStream os;
 	private InputStream is;
+	private ObjectOutputStream oos;
 	private BufferedReader responseReader;
 	private final int fragmentSize=1048576;
 	private String filePath;
 	private JLabel infoLabel;
 	private String function;
+	private FileMetadata fileMetadata;
 	public TransferFileConnHelper(String filePath,String host, int port, JLabel infoLabel, String function) throws UnknownHostException, IOException{
 		socket=new Socket(host, port);		
 		os=socket.getOutputStream();
 		is=socket.getInputStream();
+		oos=new ObjectOutputStream(os);
 		this.filePath=filePath;
 		this.infoLabel=infoLabel;
 		this.function=function;
 		responseReader=new BufferedReader(new InputStreamReader(is));
 	}
+	public TransferFileConnHelper(String filePath,String host, int port, JLabel infoLabel, String function, FileMetadata metadata) throws UnknownHostException, IOException{
+		socket=new Socket(host, port);		
+		os=socket.getOutputStream();
+		is=socket.getInputStream();
+		oos=new ObjectOutputStream(os);
+		this.filePath=filePath;
+		this.infoLabel=infoLabel;
+		this.function=function;
+		fileMetadata=metadata;
+		responseReader=new BufferedReader(new InputStreamReader(is));
+	}
 	public Boolean uploadFile(String filePath) throws IOException{
-		String metadata=createMetadata("upload", filePath);
-		byte[] metadataBytes=metadata.getBytes();
-		int metadataLength=metadataBytes.length;
-		sendIntegerOverSocket(os, metadataLength);
-		os.write(metadataBytes);
+		sendFunctionToServer(UPLOAD_FUNCTION);
+		FileMetadata metadata=createMetadata("upload", filePath);
+		sendMetadataOverSocket(metadata);
 		String response=responseReader.readLine();
 		System.out.println(response);
 		if(response.equals(PERMISSION)){
@@ -71,13 +85,14 @@ public class TransferFileConnHelper implements Runnable {
 	//Date (dd:mm:yyyy hh:ss:mm)
 	//returns true if file download was successful ended
 	//otherwise returns false
-	public Boolean downloadFile(String filePath) throws IOException{
-		String metadata=createMetadata("download", filePath);
-		byte[] metadataBytes=metadata.getBytes();
-		os.write(metadataBytes, 0, metadataBytes.length);
+	public Boolean downloadFile() throws IOException{
+		sendFunctionToServer(DOWNLOAD_FUNCTION);
+		sendMetadataOverSocket(fileMetadata);
 		String response=responseReader.readLine();
 			if(response.equals(PERMISSION)){
 				saveFile(filePath);
+				sendACK();
+				oos.close();
 				socket.close();
 				return true;
 			}
@@ -86,43 +101,53 @@ public class TransferFileConnHelper implements Runnable {
 				return false;
 			}
 	}
-	public void sendIntegerOverSocket(OutputStream sockout, int length) throws IOException{
-		sockout.write((byte)( length >> 24 ));
-		sockout.write((byte)( (length << 8) >> 24 ));
-		sockout.write((byte)( (length << 16) >> 24 ));
-		sockout.write((byte)( (length << 24) >> 24 ));
+	private void sendACK() throws IOException{
+		oos.writeObject(ACK);
+		oos.flush();
+		
+	}
+	private void sendFunctionToServer(String function) throws IOException{
+		oos.writeObject(function);
+		oos.flush();
+	}
+	private void sendMetadataOverSocket(FileMetadata metadata) throws IOException{
+		oos.writeObject(metadata);
+		oos.flush();
 	}
 	public void saveFile(String filePath) throws IOException{
 		BufferedInputStream buffIn=new BufferedInputStream(is);
 		BufferedOutputStream buffOut=new BufferedOutputStream(new FileOutputStream(filePath));
 		byte []fileFragment=new byte[1024*1024];
 		int available=-1;
-		while((available=buffIn.read(fileFragment))>0)
+		while((available=buffIn.read(fileFragment))>0){
 			buffOut.write(fileFragment, 0, available);
-		buffOut.close();
-		buffIn.close();
+			buffOut.flush();
+		}
 	}
 	public String getFileNameWithoutPath(String filePath){
 		String[] path=filePath.split("/");
 		String fileNameAndExtension=path[path.length-1];
 		return fileNameAndExtension;
 	}
-	public String createMetadata(String function,String filePath){
-		String createdMetadata=function+"\n";
-		createdMetadata+=filePath;
-		createdMetadata+="\n";
+	public FileMetadata createMetadata(String function,String filePath){
+		String modificationDate=getModificationDate(filePath);
+		FileMetadata metadata=new FileMetadata(null, filePath, modificationDate);
+		return metadata;
+	}
+	private String getModificationDate(String filePath){
 		File file=new File(filePath);
 		SimpleDateFormat sdf=new SimpleDateFormat("dd/MM/yyyy HH:ss:mm");
 		String date= sdf.format(file.lastModified());
-		createdMetadata+=date;
-		createdMetadata+="\n";
-		return createdMetadata;
+		return date;
 	}
-
 	@Override
 	public void run() {
 		try {
-			uploadFile(filePath);
+			if(function.equals(UPLOAD_FUNCTION))
+				uploadFile(filePath);
+			else if(function.equals(DOWNLOAD_FUNCTION))
+				downloadFile();
+			
 		} catch (IOException e) {
 			SwingUtilities.invokeLater(new Runnable(){
 				public void run(){

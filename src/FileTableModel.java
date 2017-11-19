@@ -1,10 +1,12 @@
 import java.util.ArrayList;
 
+import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 
 public class FileTableModel extends AbstractTableModel{
 	private String[] columnNames={ "File Name", "file path", "modification date" };
 	private ArrayList<FileMetadata> filesOnServer;
+	
 	public FileTableModel(ArrayList<FileMetadata>files){
 		filesOnServer=files;
 	}
@@ -16,6 +18,11 @@ public class FileTableModel extends AbstractTableModel{
 	@Override
 	public int getRowCount() {
 		return filesOnServer.size();
+	}
+	public FileMetadata getSelectedMetadataObject(JTable table){
+		int row=table.getSelectedRow();
+		int modelRow=table.convertRowIndexToModel(row);
+		return filesOnServer.get(modelRow);
 	}
 
 	@Override

@@ -21,6 +21,7 @@ public class MainWindow extends JFrame {
 	private FileTable onServerTable;
 	private JButton uploadButton;
 	private JButton refreshButton;
+	private JButton downloadButton;
 	private BackupClient backupClient;
 	private JLabel infoLabel;
 	private JFileChooser fileChooser;
@@ -30,12 +31,25 @@ public class MainWindow extends JFrame {
 		rmiClient=new RMIClient();
 		uploadButton=new JButton(Config.getProperty("UploadButtonLabel"));
 		refreshButton=new JButton(Config.getProperty("refreshButtonLabel"));
+		downloadButton=new JButton(Config.getProperty("downloadButtonLabel"));
 		this.setLayout(new BorderLayout());
 		JPanel menuPanel=new JPanel();
-		menuPanel.setLayout(new GridLayout(1,2));
+		menuPanel.setLayout(new GridLayout(1,3));
 		menuPanel.add(refreshButton);
 		menuPanel.add(uploadButton,2,1);
+		menuPanel.add(downloadButton);
+		downloadButton.addActionListener(new ActionListener(){
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				FileMetadata selected=onServerTable.getSelectedRow();
+				backupClient.downloadFile(selected);
+				
+			}
+			
+		});
 		fileChooser=new JFileChooser();
+		
 		fileChooser.setApproveButtonText(Config.getProperty("UploadButtonLabel"));
 		infoLabel=new JLabel("nothing");
 		this.addWindowListener(new java.awt.event.WindowAdapter(){

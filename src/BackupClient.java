@@ -28,10 +28,10 @@ public class BackupClient{
 		//start();
 	}
 	public void sendFile(String path) throws UnknownHostException{
-		TransferFileConnHelper sfHelper;
+		TransferFileConnHelper connHelper;
 			try {
-				sfHelper = new TransferFileConnHelper(path,"localhost", Integer.parseInt(Config.getProperty("port")), infoLabel, TransferFileConnHelper.UPLOAD_FUNCTION);
-				new Thread(sfHelper).start();
+				connHelper = new TransferFileConnHelper(path,Config.getProperty("serverIP"), Integer.parseInt(Config.getProperty("port")), infoLabel, TransferFileConnHelper.UPLOAD_FUNCTION);
+				new Thread(connHelper).start();
 			} catch (IOException e) {
 				SwingUtilities.invokeLater(new Runnable(){
 
@@ -44,13 +44,27 @@ public class BackupClient{
 				});
 				e.printStackTrace();
 			}
-
-		
-
 	}
 	
 	public String getFileModificationDate(String path){
 		return "1996-02-29";
+	}
+	
+	public void downloadFile(FileMetadata metadata){
+		TransferFileConnHelper connHelper;
+		try {
+			connHelper=new TransferFileConnHelper(metadata.getFileDirectory(),Config.getProperty("serverIP"), Integer.parseInt(Config.getProperty("port")),infoLabel, TransferFileConnHelper.DOWNLOAD_FUNCTION,metadata);
+			new Thread(connHelper).start();
+		} catch (NumberFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	/*public void start() throws RemoteException, AlreadyBoundException{
 		rmiRegistry=LocateRegistry.createRegistry(Integer.parseInt(Config.getProperty("clientRMIport")));
