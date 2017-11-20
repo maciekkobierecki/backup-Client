@@ -3,6 +3,8 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.rmi.AlreadyBoundException;
@@ -22,6 +24,7 @@ public class MainWindow extends JFrame {
 	private JButton uploadButton;
 	private JButton refreshButton;
 	private JButton downloadButton;
+	private JButton stopArchivization;
 	private BackupClient backupClient;
 	private JLabel infoLabel;
 	private JFileChooser fileChooser;
@@ -32,12 +35,31 @@ public class MainWindow extends JFrame {
 		uploadButton=new JButton(Config.getProperty("UploadButtonLabel"));
 		refreshButton=new JButton(Config.getProperty("refreshButtonLabel"));
 		downloadButton=new JButton(Config.getProperty("downloadButtonLabel"));
+		stopArchivization=new JButton(Config.getProperty("stopArchivizationButtonLabel"));
 		this.setLayout(new BorderLayout());
 		JPanel menuPanel=new JPanel();
-		menuPanel.setLayout(new GridLayout(1,3));
+		menuPanel.setLayout(new GridLayout(1,4));
 		menuPanel.add(refreshButton);
 		menuPanel.add(uploadButton,2,1);
 		menuPanel.add(downloadButton);
+		menuPanel.add(stopArchivization);
+		stopArchivization.addActionListener(new ActionListener(){
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				FileMetadata metadata=onServerTable.getSelectedRow();
+				onServerTable.removeMetadata(metadata);
+				try {
+					rmiClient.stopArchivization(metadata);
+				} catch (RemoteException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				
+				
+			}
+			
+		});
 		downloadButton.addActionListener(new ActionListener(){
 
 			@Override
@@ -97,7 +119,11 @@ public class MainWindow extends JFrame {
 		} catch (RemoteException e1) {
 			infoLabel.setText("Unable to connect with server.");
 		}
-
+		this.addWindowListener(new WindowAdapter(){
+			public void windowClosing(WindowEvent windowEvent){
+				onServerTable.saveData();
+			}
+		});
 		pack();
 		setVisible(true);
 	}

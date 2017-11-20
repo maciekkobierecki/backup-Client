@@ -24,8 +24,16 @@ public class FileTable extends JPanel{
 		FileMetadata selectedMetadata=model.getSelectedMetadataObject(table);
 		return selectedMetadata;
 	}
+	public void removeMetadata(FileMetadata metadata){
+		model.removeMetadata(metadata);
+		dataChanged();
+	}
 	public void dataChanged(){
 		model.fireTableDataChanged();
+	}
+	public void saveData() {
+		model.saveData();
+		
 	}
 	
 }

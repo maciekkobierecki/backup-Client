@@ -27,6 +27,7 @@ public class TransferFileConnHelper implements Runnable {
 	private OutputStream os;
 	private InputStream is;
 	private ObjectOutputStream oos;
+	private DataInputStream dinStream;
 	private BufferedReader responseReader;
 	private final int fragmentSize=1048576;
 	private String filePath;
@@ -37,6 +38,7 @@ public class TransferFileConnHelper implements Runnable {
 		socket=new Socket(host, port);		
 		os=socket.getOutputStream();
 		is=socket.getInputStream();
+		dinStream=new DataInputStream(is);
 		oos=new ObjectOutputStream(os);
 		this.filePath=filePath;
 		this.infoLabel=infoLabel;
@@ -47,6 +49,7 @@ public class TransferFileConnHelper implements Runnable {
 		socket=new Socket(host, port);		
 		os=socket.getOutputStream();
 		is=socket.getInputStream();
+		dinStream=new  DataInputStream(is);
 		oos=new ObjectOutputStream(os);
 		this.filePath=filePath;
 		this.infoLabel=infoLabel;
@@ -70,6 +73,7 @@ public class TransferFileConnHelper implements Runnable {
 			socket.shutdownOutput();
 			String response1=responseReader.readLine();
 			System.out.println(response1);
+			responseReader.close();
 			dis.close();
 			socket.close();
 			return true;	
@@ -91,8 +95,8 @@ public class TransferFileConnHelper implements Runnable {
 		String response=responseReader.readLine();
 			if(response.equals(PERMISSION)){
 				saveFile(filePath);
-				sendACK();
-				oos.close();
+				socket.shutdownOutput();
+				System.out.println("downloaded");
 				socket.close();
 				return true;
 			}
@@ -115,14 +119,14 @@ public class TransferFileConnHelper implements Runnable {
 		oos.flush();
 	}
 	public void saveFile(String filePath) throws IOException{
-		BufferedInputStream buffIn=new BufferedInputStream(is);
-		BufferedOutputStream buffOut=new BufferedOutputStream(new FileOutputStream(filePath));
+		FileOutputStream fos=new FileOutputStream(filePath);
 		byte []fileFragment=new byte[1024*1024];
 		int available=-1;
-		while((available=buffIn.read(fileFragment))>0){
-			buffOut.write(fileFragment, 0, available);
-			buffOut.flush();
+		while((available=dinStream.read(fileFragment))>0){
+			fos.write(fileFragment, 0, available);
+			fos.flush();
 		}
+		fos.close();
 	}
 	public String getFileNameWithoutPath(String filePath){
 		String[] path=filePath.split("/");
