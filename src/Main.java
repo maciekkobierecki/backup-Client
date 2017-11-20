@@ -7,11 +7,11 @@ import java.rmi.RemoteException;
 public class Main {
 
 	public static void main(String[] args) {
-		//if(System.getSecurityManager()==null)
-			//System.setSecurityManager(new SecurityManager());
+		// if(System.getSecurityManager()==null)
+		// System.setSecurityManager(new SecurityManager());
 		Config.init();
 		new MainWindow();
-	
+
 	}
 
 }
