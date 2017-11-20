@@ -1,8 +1,9 @@
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.MalformedURLException;
@@ -17,7 +18,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTable;
 
 public class MainWindow extends JFrame {
 	private FileTable onServerTable;
@@ -29,25 +29,26 @@ public class MainWindow extends JFrame {
 	private JLabel infoLabel;
 	private JFileChooser fileChooser;
 	private RMIClient rmiClient;
-	public MainWindow(){
+
+	public MainWindow() {
 		super();
-		rmiClient=new RMIClient();
-		uploadButton=new JButton(Config.getProperty("UploadButtonLabel"));
-		refreshButton=new JButton(Config.getProperty("refreshButtonLabel"));
-		downloadButton=new JButton(Config.getProperty("downloadButtonLabel"));
-		stopArchivization=new JButton(Config.getProperty("stopArchivizationButtonLabel"));
+		rmiClient = new RMIClient();
+		uploadButton = new JButton(Config.getProperty("UploadButtonLabel"));
+		refreshButton = new JButton(Config.getProperty("refreshButtonLabel"));
+		downloadButton = new JButton(Config.getProperty("downloadButtonLabel"));
+		stopArchivization = new JButton(Config.getProperty("stopArchivizationButtonLabel"));
 		this.setLayout(new BorderLayout());
-		JPanel menuPanel=new JPanel();
-		menuPanel.setLayout(new GridLayout(1,4));
+		JPanel menuPanel = new JPanel();
+		menuPanel.setLayout(new GridLayout(1, 4));
 		menuPanel.add(refreshButton);
-		menuPanel.add(uploadButton,2,1);
+		menuPanel.add(uploadButton, 2, 1);
 		menuPanel.add(downloadButton);
 		menuPanel.add(stopArchivization);
-		stopArchivization.addActionListener(new ActionListener(){
+		stopArchivization.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				FileMetadata metadata=onServerTable.getSelectedRow();
+				FileMetadata metadata = onServerTable.getSelectedRow();
 				onServerTable.removeMetadata(metadata);
 				try {
 					rmiClient.stopArchivization(metadata);
@@ -55,81 +56,82 @@ public class MainWindow extends JFrame {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
-				
-				
-			}
-			
-		});
-		downloadButton.addActionListener(new ActionListener(){
 
+			}
+
+		});
+		downloadButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				FileMetadata selected=onServerTable.getSelectedRow();
+				FileMetadata selected = onServerTable.getSelectedRow();
 				backupClient.downloadFile(selected);
-				
 			}
-			
 		});
-		fileChooser=new JFileChooser();
-		
+
+		fileChooser = new JFileChooser();
 		fileChooser.setApproveButtonText(Config.getProperty("UploadButtonLabel"));
-		infoLabel=new JLabel("nothing");
-		this.addWindowListener(new java.awt.event.WindowAdapter(){
-			public void windowClosing(java.awt.event.WindowEvent wEvent){
-			System.exit(0);
+		infoLabel = new JLabel("nothing");
+		this.addWindowListener(new java.awt.event.WindowAdapter() {
+			public void windowClosing(java.awt.event.WindowEvent wEvent) {
+				System.exit(0);
 			}
 		});
 
-
-		refreshButton.addActionListener(new ActionListener(){
-
+		refreshButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				refreshFileTable();		
+				refreshFileTable();
 			}
-			
 		});
+
 		try {
-			backupClient=new BackupClient(infoLabel);
+			backupClient = new BackupClient(infoLabel);
 		} catch (MalformedURLException | RemoteException | NotBoundException | AlreadyBoundException e) {
 			infoLabel.setText("error");
 			e.printStackTrace();
 		}
+
 		add(menuPanel, BorderLayout.PAGE_END);
-		JFrame frame=this;
-		uploadButton.addActionListener(new ActionListener(){
+		JFrame frame = this;
+
+		uploadButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				try {
-					int returnedValue=fileChooser.showOpenDialog(frame);
-					if(returnedValue==JFileChooser.APPROVE_OPTION)
-						backupClient.sendFile((fileChooser).getSelectedFile().getAbsolutePath());
-					else
+					int returnedValue = fileChooser.showOpenDialog(frame);
+					if (returnedValue == JFileChooser.APPROVE_OPTION) {
+						String uploadPath = (fileChooser).getSelectedFile().getAbsolutePath();
+						backupClient.sendFile(uploadPath);
+						new FileWatcher(new File(uploadPath)).start();
+					} else
 						System.out.println("cancel was selected");
 				} catch (UnknownHostException e) {
 					infoLabel.setText("unable to connect with server");
 					e.printStackTrace();
-				}				
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
-			
+
 		});
 		try {
-			onServerTable=new FileTable(rmiClient.getFilesMetadata());
+			onServerTable = new FileTable(rmiClient.getFilesMetadata());
 			add(onServerTable);
 		} catch (RemoteException e1) {
 			infoLabel.setText("Unable to connect with server.");
 		}
-		this.addWindowListener(new WindowAdapter(){
-			public void windowClosing(WindowEvent windowEvent){
+		this.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent windowEvent) {
 				onServerTable.saveData();
 			}
 		});
 		pack();
 		setVisible(true);
 	}
-	public void refreshFileTable(){
+
+	public void refreshFileTable() {
 		try {
-			ArrayList<FileMetadata> fetchedMetadata=rmiClient.getFilesMetadata();
+			ArrayList<FileMetadata> fetchedMetadata = rmiClient.getFilesMetadata();
 			onServerTable.replace(fetchedMetadata);
 			onServerTable.dataChanged();
 		} catch (RemoteException e) {
