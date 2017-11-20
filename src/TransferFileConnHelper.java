@@ -152,7 +152,7 @@ public class TransferFileConnHelper implements Runnable {
 
 	private String getModificationDate(String filePath) {
 		File file = new File(filePath);
-		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:ss:mm");
+		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 		String date = sdf.format(file.lastModified());
 		return date;
 	}

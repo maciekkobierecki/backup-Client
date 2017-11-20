@@ -7,13 +7,17 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+interface FileChangedListener {
+	public void fileChanged(File file);
+}
 public class FileWatcher extends Thread {
+	private FileChangedListener listener;
 	private final File file;
 	private AtomicBoolean stop = new AtomicBoolean(false);
 
-	public FileWatcher(File file) {
+	public FileWatcher(File file, FileChangedListener listener) {
 		this.file = file;
+		this.listener=listener;
 	}
 
 	public boolean isStopped() {
@@ -25,7 +29,7 @@ public class FileWatcher extends Thread {
 	}
 
 	public void doOnChange() {
-		// Do whatever action you want here
+		listener.fileChanged(file);
 		System.out.println(file.getName() + " changed!");
 	}
 

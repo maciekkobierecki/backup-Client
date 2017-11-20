@@ -102,7 +102,7 @@ public class MainWindow extends JFrame {
 					if (returnedValue == JFileChooser.APPROVE_OPTION) {
 						String uploadPath = (fileChooser).getSelectedFile().getAbsolutePath();
 						backupClient.sendFile(uploadPath);
-						new FileWatcher(new File(uploadPath)).start();
+						new FileWatcher(new File(uploadPath),(FileChangedListener)backupClient).start();
 					} else
 						System.out.println("cancel was selected");
 				} catch (UnknownHostException e) {

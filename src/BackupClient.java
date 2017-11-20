@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -13,7 +14,7 @@ import java.rmi.registry.Registry;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-public class BackupClient {
+public class BackupClient implements FileChangedListener{
 	private Remote remote;
 	ServerInterface server;
 	JLabel infoLabel;
@@ -82,4 +83,16 @@ public class BackupClient {
 	 * 
 	 * }
 	 */
+
+	@Override
+	public void fileChanged(File file) {
+		String filePath=file.getAbsolutePath();
+		try {
+			sendFile(filePath);
+		} catch (UnknownHostException e) {
+			infoLabel.setText("cant send changed file. Unknown host exception");
+			e.printStackTrace();
+		}
+		
+	}
 }
