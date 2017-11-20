@@ -28,8 +28,16 @@ public class FileTable extends JPanel {
 		return selectedMetadata;
 	}
 
-	public void dataChanged() {
+	public void removeMetadata(FileMetadata metadata){
+		model.removeMetadata(metadata);
+		dataChanged();
+	}
+	public void dataChanged(){
 		model.fireTableDataChanged();
+	}
+	public void saveData() {
+		model.saveData();
+		
 	}
 
 }

@@ -1,8 +1,12 @@
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.Properties;
 
 public class Config {
@@ -30,6 +34,29 @@ public class Config {
 		catch(NullPointerException e){
 			return "config file error";
 		}
+		
+	}
+	public static synchronized void saveFileMetadataList(ArrayList<FileMetadata> metadataList){
+		try {
+			FileOutputStream fileOut=new FileOutputStream(getProperty("metadataFile"));
+			ObjectOutputStream outStream=new ObjectOutputStream(fileOut);
+			outStream.writeObject(metadataList);
+			outStream.flush();
+			fileOut.close();
+			System.out.println("Metadata saved to file");
+		} catch (FileNotFoundException e) {
+			System.exit(0);
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	public static synchronized ArrayList<FileMetadata> loadMetadataListFromFile() throws IOException, ClassNotFoundException{
+		FileInputStream fileIn=new FileInputStream(getProperty("metadataFile"));
+		ObjectInputStream in=new ObjectInputStream(fileIn);
+		ArrayList<FileMetadata> metadata=(ArrayList<FileMetadata>) in.readObject();
+		return metadata;
 		
 	}
 	

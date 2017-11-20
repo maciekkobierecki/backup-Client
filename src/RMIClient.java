@@ -31,5 +31,8 @@ public class RMIClient {
 		ArrayList<FileMetadata> metadata=server.getFilesExistingOnServer();
 		return metadata;
 	}
+	public void stopArchivization(FileMetadata metadata) throws RemoteException{
+		server.stopArchivization(metadata);
+	}
 	
 }

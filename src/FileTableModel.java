@@ -59,4 +59,13 @@ public class FileTableModel extends AbstractTableModel {
 
 	}
 
+	public void removeMetadata(FileMetadata metadata) {
+		filesOnServer.remove(metadata);
+		
+	}
+	public void saveData() {
+		Config.saveFileMetadataList(filesOnServer);
+		
+	}
+
 }
