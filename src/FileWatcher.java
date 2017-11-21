@@ -7,17 +7,19 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 interface FileChangedListener {
 	public void fileChanged(File file);
 }
-public class FileWatcher extends Thread {
+
+public class FileWatcher implements Runnable {
 	private FileChangedListener listener;
 	private final File file;
 	private AtomicBoolean stop = new AtomicBoolean(false);
 
 	public FileWatcher(File file, FileChangedListener listener) {
 		this.file = file;
-		this.listener=listener;
+		this.listener = listener;
 	}
 
 	public boolean isStopped() {
@@ -33,11 +35,15 @@ public class FileWatcher extends Thread {
 		System.out.println(file.getName() + " changed!");
 	}
 
+	public String getFilename() {
+		return file.getName();
+	}
+
 	@Override
 	public void run() {
 		try (WatchService watcher = FileSystems.getDefault().newWatchService()) {
 			Path path = file.toPath().getParent();
-			path.register(watcher, StandardWatchEventKinds.ENTRY_MODIFY);
+			path.register(watcher, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
 			while (!isStopped()) {
 				WatchKey key;
 				try {
@@ -63,6 +69,9 @@ public class FileWatcher extends Thread {
 					} else if (kind == java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
 							&& filename.toString().equals(file.getName())) {
 						doOnChange();
+					} else if (kind == java.nio.file.StandardWatchEventKinds.ENTRY_DELETE
+							&& filename.toString().equals(file.getName())) {
+						stopThread();
 					}
 					boolean valid = key.reset();
 					if (!valid) {

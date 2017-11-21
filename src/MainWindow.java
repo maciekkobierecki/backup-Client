@@ -45,20 +45,18 @@ public class MainWindow extends JFrame {
 		menuPanel.add(downloadButton);
 		menuPanel.add(stopArchivization);
 		stopArchivization.addActionListener(new ActionListener() {
-
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				FileMetadata metadata = onServerTable.getSelectedRow();
 				onServerTable.removeMetadata(metadata);
 				try {
 					rmiClient.stopArchivization(metadata);
+					FileWatcherManager.removeWatcher(metadata.getFileName());
 				} catch (RemoteException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
-
 			}
-
 		});
 		downloadButton.addActionListener(new ActionListener() {
 			@Override
@@ -86,10 +84,11 @@ public class MainWindow extends JFrame {
 
 		try {
 			backupClient = new BackupClient(infoLabel);
-		} catch (MalformedURLException | RemoteException | NotBoundException | AlreadyBoundException e) {
+			FileWatcherManager.init(backupClient);
+		} catch (IOException | ClassNotFoundException | NotBoundException | AlreadyBoundException e) {
 			infoLabel.setText("error");
 			e.printStackTrace();
-		}
+		} 		
 
 		add(menuPanel, BorderLayout.PAGE_END);
 		JFrame frame = this;
@@ -102,7 +101,7 @@ public class MainWindow extends JFrame {
 					if (returnedValue == JFileChooser.APPROVE_OPTION) {
 						String uploadPath = (fileChooser).getSelectedFile().getAbsolutePath();
 						backupClient.sendFile(uploadPath);
-						new FileWatcher(new File(uploadPath),(FileChangedListener)backupClient).start();
+						FileWatcherManager.addWatcher(uploadPath, backupClient);
 					} else
 						System.out.println("cancel was selected");
 				} catch (UnknownHostException e) {
@@ -123,6 +122,7 @@ public class MainWindow extends JFrame {
 		this.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent windowEvent) {
 				onServerTable.saveData();
+				FileWatcherManager.serializeWatchList();
 			}
 		});
 		pack();
@@ -134,6 +134,7 @@ public class MainWindow extends JFrame {
 			ArrayList<FileMetadata> fetchedMetadata = rmiClient.getFilesMetadata();
 			onServerTable.replace(fetchedMetadata);
 			onServerTable.dataChanged();
+			
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
