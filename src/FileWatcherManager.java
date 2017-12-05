@@ -16,42 +16,35 @@ public class FileWatcherManager {
 
 	static public void addWatcher(String uploadPath, BackupClient backupClient) {
 		if (!filesToWatch.contains(uploadPath)) {
+			System.out.println("Adding to watchlist: " + uploadPath);	
 			FileWatcher filewatcher = new FileWatcher(new File(uploadPath), (FileChangedListener) backupClient);
+			filesToWatch.add(uploadPath);
 			fileWatchers.add(filewatcher);
 			Thread t = new Thread((Runnable) filewatcher);
 			t.start();
 		}
 	}
 
-	static public void removeWatcher(String filename) {
+	static public void removeWatcher(String filepath) {
 		for (FileWatcher watcher : fileWatchers) {
-			if (watcher.getFilename().equals(filename)) {
-				watcher.stopThread();
-				// Czy to nie jest nierozsądne?
-				filesToWatch.remove(watcher.getFilename());
+			if (watcher.getFilename().equals(filepath)) {
+				filesToWatch.remove(filepath);
 				fileWatchers.remove(watcher);
+				watcher.stopThread();
 			}
 		}
 	}
 
 	private static void watchFilesFromWatchList() {
 		for (String path : filesToWatch) {
+			System.out.println("From watch list: " + path);
 			addWatcher(path, backupClient);
 		}
 	}
 
 	static public void serializeWatchList() {
-		Config.serializeArrayList(filesToWatch);
-	}
-
-	static public void saveFilesToWatchList(ArrayList<FileMetadata> filesOnServer) {
-		String directory;
-		for (FileMetadata fileMetadata : filesOnServer) {
-			directory = fileMetadata.getFileDirectory();
-			if (!filesToWatch.contains(directory))
-				addWatcher(directory, backupClient);
-		}
-
+		// serializuj(filesToWatch)
+		
 	}
 
 }

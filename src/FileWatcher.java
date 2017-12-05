@@ -38,6 +38,10 @@ public class FileWatcher implements Runnable {
 	public String getFilename() {
 		return file.getName();
 	}
+	
+	public String getPath() {
+		return file.getAbsolutePath();
+	}
 
 	@Override
 	public void run() {
