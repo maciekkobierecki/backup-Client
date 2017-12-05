@@ -43,7 +43,6 @@ public class BackupClient implements FileChangedListener{
 				@Override
 				public void run() {
 					infoLabel.setText("Unable to send file");
-
 				}
 
 			});
