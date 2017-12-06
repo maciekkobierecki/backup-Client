@@ -19,10 +19,9 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-public class MainWindow extends JFrame {
+public class MainWindow extends JFrame implements FileUploadedListener{
 	private FileTable onServerTable;
 	private JButton uploadButton;
-	private JButton refreshButton;
 	private JButton downloadButton;
 	private JButton stopArchivization;
 	private BackupClient backupClient;
@@ -34,14 +33,12 @@ public class MainWindow extends JFrame {
 		super();
 		rmiClient = new RMIClient();
 		uploadButton = new JButton(Config.getProperty("UploadButtonLabel"));
-		refreshButton = new JButton(Config.getProperty("refreshButtonLabel"));
 		downloadButton = new JButton(Config.getProperty("downloadButtonLabel"));
 		stopArchivization = new JButton(Config.getProperty("stopArchivizationButtonLabel"));
 		this.setLayout(new BorderLayout());
 		JPanel menuPanel = new JPanel();
-		menuPanel.setLayout(new GridLayout(1, 4));
-		menuPanel.add(refreshButton);
-		menuPanel.add(uploadButton, 2, 1);
+		menuPanel.setLayout(new GridLayout(1, 3));
+		menuPanel.add(uploadButton);
 		menuPanel.add(downloadButton);
 		menuPanel.add(stopArchivization);
 		stopArchivization.addActionListener(new ActionListener() {
@@ -52,6 +49,7 @@ public class MainWindow extends JFrame {
 				try {
 					rmiClient.stopArchivization(metadata);
 					FileWatcherManager.removeWatcher(metadata.getFileName());
+					refreshFileTable();
 				} catch (RemoteException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -75,15 +73,8 @@ public class MainWindow extends JFrame {
 			}
 		});
 
-		refreshButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				refreshFileTable();
-			}
-		});
-
 		try {
-			backupClient = new BackupClient(infoLabel);
+			backupClient = new BackupClient(infoLabel,this);
 			FileWatcherManager.init(backupClient);
 		} catch (IOException | ClassNotFoundException | NotBoundException | AlreadyBoundException e) {
 			infoLabel.setText("error");
@@ -102,6 +93,7 @@ public class MainWindow extends JFrame {
 						String uploadPath = (fileChooser).getSelectedFile().getAbsolutePath();
 						backupClient.sendFile(uploadPath);
 						FileWatcherManager.addWatcher(uploadPath, backupClient);
+						refreshFileTable();
 					} else
 						System.out.println("cancel was selected");
 				} catch (UnknownHostException e) {
@@ -127,6 +119,7 @@ public class MainWindow extends JFrame {
 		});
 		pack();
 		setVisible(true);
+		refreshFileTable();
 	}
 
 	public void refreshFileTable() {
@@ -139,6 +132,12 @@ public class MainWindow extends JFrame {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void fileUploaded() {
+		refreshFileTable();
+		
 	}
 
 }

@@ -18,6 +18,10 @@ import java.text.SimpleDateFormat;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
+interface FileUploadedListener{
+	public void fileUploaded();
+}
+
 public class TransferFileConnHelper implements Runnable {
 	public final static String PERMISSION = "PERMISSION";
 	public final static String UPLOAD_FUNCTION = "upload";
@@ -34,8 +38,9 @@ public class TransferFileConnHelper implements Runnable {
 	private JLabel infoLabel;
 	private String function;
 	private FileMetadata fileMetadata;
+	private FileUploadedListener listener;
 
-	public TransferFileConnHelper(String filePath, String host, int port, JLabel infoLabel, String function)
+	public TransferFileConnHelper(FileUploadedListener listener,String filePath, String host, int port, JLabel infoLabel, String function)
 			throws UnknownHostException, IOException {
 		socket = new Socket(host, port);
 		os = socket.getOutputStream();
@@ -46,6 +51,7 @@ public class TransferFileConnHelper implements Runnable {
 		this.infoLabel = infoLabel;
 		this.function = function;
 		responseReader = new BufferedReader(new InputStreamReader(is));
+		this.listener=listener;
 	}
 
 	public TransferFileConnHelper(String filePath, String host, int port, JLabel infoLabel, String function,
@@ -81,6 +87,7 @@ public class TransferFileConnHelper implements Runnable {
 			responseReader.close();
 			dis.close();
 			socket.close();
+			callFileUploadedListener();
 			return true;
 		} else {
 			return false;
@@ -155,6 +162,10 @@ public class TransferFileConnHelper implements Runnable {
 		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 		String date = sdf.format(file.lastModified());
 		return date;
+	}
+	
+	private void callFileUploadedListener(){
+		listener.fileUploaded();
 	}
 
 	@Override
