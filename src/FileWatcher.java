@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.Serializable;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.StandardWatchEventKinds;
@@ -12,7 +13,7 @@ interface FileChangedListener {
 	public void fileChanged(File file);
 }
 
-public class FileWatcher implements Runnable {
+public class FileWatcher implements Runnable, Serializable {
 	private FileChangedListener listener;
 	private final File file;
 	private AtomicBoolean stop = new AtomicBoolean(false);

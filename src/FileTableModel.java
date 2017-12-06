@@ -66,12 +66,9 @@ public class FileTableModel extends AbstractTableModel {
 
 	public void saveData() {
 		// Config.saveFileMetadataList(filesOnServer);
-		Config.serializeArrayList(filesOnServer);
+		Config.serializeArrayList(filesOnServer, "metadataFile");
 
 	}
 
-	public void saveFilesToWatchList() {
-		FileWatcherManager.saveFilesToWatchList(filesOnServer);
-	}
 
 }
