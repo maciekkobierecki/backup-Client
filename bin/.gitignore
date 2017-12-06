@@ -10,3 +10,4 @@
 /WatchDir.class
 /FileChangedListener.class
 /FileWatcherManager.class
+/FileUploadedListener.class

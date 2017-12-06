@@ -19,8 +19,9 @@ public class BackupClient implements FileChangedListener{
 	ServerInterface server;
 	JLabel infoLabel;
 	Registry rmiRegistry;
+	FileUploadedListener listener;
 
-	public BackupClient(JLabel info)
+	public BackupClient(JLabel info, FileUploadedListener listener)
 			throws MalformedURLException, RemoteException, NotBoundException, AlreadyBoundException {
 		remote = Naming.lookup("backupServer");
 		if (!(remote instanceof ServerInterface))
@@ -28,13 +29,14 @@ public class BackupClient implements FileChangedListener{
 		else
 			server = (ServerInterface) remote;
 		infoLabel = info;
+		this.listener=listener;
 		// start();
 	}
 
 	public void sendFile(String path) throws UnknownHostException {
 		TransferFileConnHelper connHelper;
 		try {
-			connHelper = new TransferFileConnHelper(path, Config.getProperty("serverIP"),
+			connHelper = new TransferFileConnHelper(listener,path, Config.getProperty("serverIP"),
 					Integer.parseInt(Config.getProperty("port")), infoLabel, TransferFileConnHelper.UPLOAD_FUNCTION);
 			new Thread(connHelper).start();
 		} catch (IOException e) {
