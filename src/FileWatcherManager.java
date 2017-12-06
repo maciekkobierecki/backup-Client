@@ -1,3 +1,4 @@
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,42 +10,57 @@ public class FileWatcherManager {
 
 	public static void init(BackupClient bcpclient) throws ClassNotFoundException, IOException {
 		fileWatchers = new ArrayList<FileWatcher>();
+		filesToWatch = new ArrayList<String>();
 		backupClient = bcpclient;
-		filesToWatch = Config.deserializeArrayList("watchedFilesList");
-		watchFilesFromWatchList();
+		try {
+			watchFilesFromWatchList(Config.deserializeArrayList("watchedFilesList"));
+
+		} catch (EOFException e) {
+			e.printStackTrace();
+		}
+
 	}
 
-	static public void addWatcher(String uploadPath, BackupClient backupClient) {
-		if (!filesToWatch.contains(uploadPath)) {
-			System.out.println("Adding to watchlist: " + uploadPath);	
-			FileWatcher filewatcher = new FileWatcher(new File(uploadPath), (FileChangedListener) backupClient);
-			filesToWatch.add(uploadPath);
-			fileWatchers.add(filewatcher);
-			Thread t = new Thread((Runnable) filewatcher);
-			t.start();
-		}
+	static public void addWatcher(String uploadPath) {
+
+			if (!filesToWatch.contains(uploadPath)) {
+				System.out.println("Adding to watchlist: " + uploadPath);
+				FileWatcher filewatcher = new FileWatcher(new File(uploadPath), (FileChangedListener) backupClient);
+				filesToWatch.add(uploadPath);
+				fileWatchers.add(filewatcher);
+				Thread t = new Thread((Runnable) filewatcher);
+				t.start();
+				serializeWatchList();
+			}
 	}
 
 	static public void removeWatcher(String filepath) {
+		
+		FileWatcher toBeDeleted = new FileWatcher(null, backupClient);
+		
 		for (FileWatcher watcher : fileWatchers) {
-			if (watcher.getFilename().equals(filepath)) {
-				filesToWatch.remove(filepath);
-				fileWatchers.remove(watcher);
-				watcher.stopThread();
+			if (watcher.getPath().equals(filepath)) {
+				System.out.println("Stopped following: " + filepath);
+				toBeDeleted = watcher;
+				
 			}
 		}
+		filesToWatch.remove(filepath);
+		fileWatchers.remove(toBeDeleted);
+		toBeDeleted.stopThread();
+		serializeWatchList();
 	}
 
-	private static void watchFilesFromWatchList() {
-		for (String path : filesToWatch) {
+	private static void watchFilesFromWatchList(ArrayList<String> deserialized) {
+		for (String path : deserialized) {
 			System.out.println("From watch list: " + path);
-			addWatcher(path, backupClient);
+			addWatcher(path);
 		}
 	}
 
 	static public void serializeWatchList() {
-		// serializuj(filesToWatch)
-		
+		System.out.println("Saving.... ");
+		Config.serializeArrayList(filesToWatch, "watchedFilesList");
 	}
 
 }

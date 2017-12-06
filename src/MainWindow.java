@@ -51,9 +51,8 @@ public class MainWindow extends JFrame {
 				onServerTable.removeMetadata(metadata);
 				try {
 					rmiClient.stopArchivization(metadata);
-					FileWatcherManager.removeWatcher(metadata.getFileName());
+					FileWatcherManager.removeWatcher(metadata.getFileDirectory());
 				} catch (RemoteException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			}
@@ -101,7 +100,7 @@ public class MainWindow extends JFrame {
 					if (returnedValue == JFileChooser.APPROVE_OPTION) {
 						String uploadPath = (fileChooser).getSelectedFile().getAbsolutePath();
 						backupClient.sendFile(uploadPath);
-						FileWatcherManager.addWatcher(uploadPath, backupClient);
+						FileWatcherManager.addWatcher(uploadPath);
 					} else
 						System.out.println("cancel was selected");
 				} catch (UnknownHostException e) {
@@ -122,12 +121,14 @@ public class MainWindow extends JFrame {
 		this.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent windowEvent) {
 				onServerTable.saveData();
+				System.out.println("Closing.... ");
 				FileWatcherManager.serializeWatchList();
 			}
 		});
 		pack();
 		setVisible(true);
 	}
+	
 
 	public void refreshFileTable() {
 		try {

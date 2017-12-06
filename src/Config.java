@@ -1,3 +1,4 @@
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -56,9 +57,9 @@ public class Config {
 	// }
 	// }
 
-	public static synchronized void serializeArrayList(ArrayList<?> arrayToSerialize) {
+	public static synchronized void serializeArrayList(ArrayList<?> arrayToSerialize, String fileName) {
 		try {
-			FileOutputStream fileOut = new FileOutputStream(getProperty("metadataFile"));
+			FileOutputStream fileOut = new FileOutputStream(getProperty(fileName));
 			ObjectOutputStream outStream = new ObjectOutputStream(fileOut);
 			outStream.writeObject(arrayToSerialize);
 			outStream.flush();
@@ -82,10 +83,11 @@ public class Config {
 //	}
 
 	public static synchronized ArrayList<String> deserializeArrayList(String fileName)
-			throws IOException, ClassNotFoundException {
+			throws IOException, ClassNotFoundException, EOFException {
 		FileInputStream fileIn = new FileInputStream(getProperty(fileName));
 		ObjectInputStream in = new ObjectInputStream(fileIn);
 		ArrayList<String> arrayList = (ArrayList<String>) in.readObject();
+		System.out.println("Deserialized list to watch");
 		return arrayList;
 	}
 
